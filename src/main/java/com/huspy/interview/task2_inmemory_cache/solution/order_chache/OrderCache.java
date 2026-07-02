@@ -32,9 +32,14 @@ class OrderCacheImpl implements OrderCache {
         // Atomic operation on ConcurrentHashMap, computeIfAbsent prevents race conditions where two threads try to initialize the list for the same userId.
         // - CopyOnWriteArrayList is thread-safe for reads/writes, but fits best if reads heavily outnumber writes.
         // - Alternative: Collections.synchronizedList(new ArrayList<>()) if writes are frequent.
-        userOrdersIndex
-                .computeIfAbsent(order.userId, k -> new CopyOnWriteArrayList<>())
-                .add(order);
+        try {
+            userOrdersIndex
+                    .computeIfAbsent(order.userId, k -> new CopyOnWriteArrayList<>())
+                    .add(order);
+        } catch (Throwable t) {
+            orderIdIndex.remove(order.id);
+            throw t;
+        }
     }
 
     @Override
