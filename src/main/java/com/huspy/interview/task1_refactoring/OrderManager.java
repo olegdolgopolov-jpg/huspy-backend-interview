@@ -1,11 +1,8 @@
 package com.huspy.interview.task1_refactoring;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
 public class OrderManager {
 
     private List<String> processedOrders = new ArrayList<>();
@@ -26,8 +23,7 @@ public class OrderManager {
         }
     }
 
-    @Transactional
-    public void updateOrderStatusInDb(Order req) {
+    public void updateOrderStatusInDb(Order req) throws OrderUpdateException {
         System.out.println("Saving to DB...");
     }
 }
@@ -36,4 +32,10 @@ class Order {
     protected String id;
     protected String status;
     protected double price;
+}
+
+class OrderUpdateException extends Exception {
+    public OrderUpdateException(String message) {
+        super(message);
+    }
 }
