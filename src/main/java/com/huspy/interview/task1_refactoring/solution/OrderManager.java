@@ -28,8 +28,8 @@ public class OrderManager {
         }
 
         // FIX moderate: Idempotency check. No need to check req.id for null anymore!
-        if (processedOrders.contains(req.getId())) {
-            log.info("Order {} is already processed. Skipping.", req.getId());
+        if (!processedOrders.add(req.getId())) {
+            log.info("Order {} is already processing or processed. Skipping.", req.getId());
             return;
         }
 
@@ -37,11 +37,9 @@ public class OrderManager {
             try {
                 Order discountedOrder = req.withDiscount(DISCOUNT_AMOUNT);
                 updateOrderStatusInDb(discountedOrder);
-                // FIX moderate: Add to the processed list ONLY after successful execution
-                // to avoid inconsistent state if an exception is thrown above.
-                processedOrders.add(discountedOrder.getId());
-
             } catch (OrderUpdateException e) {
+                // FIX major: remove from required processing set even if the update fails.
+                processedOrders.remove(req.getId());
                 // FIX major: Log the exception properly and rethrow it.
                 log.error("Error processing order id: {}", req.getId(), e);
                 throw new RuntimeException("Order processing failed", e);
